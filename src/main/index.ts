@@ -1,5 +1,5 @@
 import { app, session, BrowserWindow } from 'electron'
-import { electronApp, optimizer } from '@electron-toolkit/utils'
+import { electronApp, is, optimizer } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { FlaredApp } from './app'
 import { installMenu } from './menu'
@@ -41,6 +41,8 @@ function showMainWindow(): BrowserWindow {
 app.whenReady().then(() => {
   // Set app user model id for windows
   electronApp.setAppUserModelId('app.flared')
+  // Packaged builds get the icon from the bundle; in dev the dock would show Electron's.
+  if (is.dev) app.dock?.setIcon(icon)
 
   // Default open or close DevTools by F12 in development
   // and ignore CommandOrControl + R in production.

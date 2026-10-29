@@ -41,7 +41,13 @@ Notes:
 
 ## Releases
 
-Pushing a `v*` tag builds mac/windows/linux artifacts in CI. Builds are unsigned and mac notarization is off (`notarize: false`); set up signing secrets before distributing widely.
+Pushing a `v*` tag (which must match the version in `package.json`) runs the checks, builds mac/windows/linux installers in CI and publishes them as a GitHub release:
+
+```sh
+git tag v1.0.0 && git push origin v1.0.0
+```
+
+Builds are unsigned unless the optional signing secrets are set (`CSC_LINK`, `CSC_KEY_PASSWORD`, `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, `APPLE_TEAM_ID`, `WIN_CSC_LINK`, `WIN_CSC_KEY_PASSWORD`). Mac notarization is also off (`notarize: false`); turn it on before distributing widely. `npm run check` runs the same typecheck, lint, format and test steps as CI.
 
 ## Legal
 

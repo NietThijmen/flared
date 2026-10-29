@@ -1,8 +1,17 @@
+# Typechecks, lints and tests every push to main and every pull request.
 name: CI
+
 on:
   push:
     branches: [main]
   pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   check:
@@ -14,7 +23,6 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      - run: npm run lint
-      - run: npm run typecheck
-      - run: npm test
+      # typecheck + lint + prettier + unit tests
+      - run: npm run check
       - run: npx electron-vite build

@@ -4,6 +4,27 @@ A local-first media downloader. Paste a link (YouTube, SoundCloud and 1000+ othe
 
 Flared is a desktop UI (Electron + Svelte 5) around [yt-dlp](https://github.com/yt-dlp/yt-dlp) and ffmpeg.
 
+## Supported sites
+
+These sites have first-class support: Flared recognises their links, validates them, and tunes the download for the site.
+
+| Site        | Links                                           | Notes                                                                |
+| ----------- | ----------------------------------------------- | -------------------------------------------------------------------- |
+| SoundCloud  | tracks, sets, artist pages, `on.soundcloud.com` | Audio only. Artist and title are tagged from `Artist - Song` titles. |
+| Bandcamp    | `/track/…` and `/album/…` (artist subdomains)   | Audio only. Tags the real track name, plus album and track number.   |
+| Mixcloud    | single mixes                                    | Audio only.                                                          |
+| Twitch      | clips and VODs                                  | Live channels are not matched.                                       |
+| Kick        | VODs and clips                                  | Live channels are not matched.                                       |
+| TikTok      | videos and `vm.`/`vt.` share links              | Photo slideshows are not matched.                                    |
+| X / Twitter | posts (`/<user>/status/<id>`)                   | Only posts that contain a video.                                     |
+| Instagram   | reels, posts, IGTV                              | Often needs browser cookies (Settings).                              |
+| Reddit      | posts, share links, `redd.it`, `v.redd.it`      | Video and audio streams are merged.                                  |
+| Vimeo       | videos and `player.vimeo.com` embeds            | Some videos need browser cookies (Settings).                         |
+
+Audio-only sites download as audio whatever type you pick. Any other link yt-dlp understands (YouTube and [1000+ more](https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md)) still works through the generic downloader. Flared handles video and audio only, not images or galleries.
+
+Each site is a small module in `src/main/downloaders/` (a URL validator plus option rules) registered in `index.ts`; the shared `Downloader` interface is in `types.ts`.
+
 ## Privacy
 
 Flared only talks to:

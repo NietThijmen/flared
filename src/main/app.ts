@@ -1,7 +1,7 @@
 import { app, BrowserWindow, clipboard, dialog, Notification, shell } from 'electron'
 import { join } from 'node:path'
 import type { EventChannel, EventMap, InvokeChannel, InvokeMap } from '../shared/ipc'
-import type { Job, Settings } from '../shared/types'
+import type { DownloadOptions, Job, QuickResult, Result, Settings } from '../shared/types'
 import { BinaryManager } from './binaries'
 import { assertUrl, type ArgContext } from './engine/args'
 import { Engine } from './engine/ytdlp'
@@ -18,6 +18,12 @@ type Handlers = {
   ) => ReturnType<InvokeMap[K]> | Promise<ReturnType<InvokeMap[K]>>
 }
 
+export interface AppHooks {
+  /** Shows the main window, creating it if it was closed. */
+  showMainWindow(): BrowserWindow
+  hideQuick(): void
+}
+
 export class FlaredApp {
   readonly binaries: BinaryManager
   readonly settingsStore: JsonStore<Settings>
@@ -28,7 +34,10 @@ export class FlaredApp {
   private lastClipboard = ''
   private clipboardTimer: NodeJS.Timeout | null = null
 
-  constructor(private readonly getWindow: () => BrowserWindow | null) {
+  constructor(
+    private readonly getWindow: () => BrowserWindow | null,
+    private readonly hooks: AppHooks
+  ) {
     const data = app.getPath('userData')
     this.settingsStore = new JsonStore(join(data, 'settings.json'), () =>
       defaultSettings(app.getPath('downloads'))
@@ -104,14 +113,6 @@ export class FlaredApp {
     n.show()
   }
 
-  private showWindow(): void {
-    const win = this.getWindow()
-    if (!win) return
-    if (win.isMinimized()) win.restore()
-    win.show()
-    win.focus()
-  }
-
   private applyClipboardWatch(): void {
     if (this.clipboardTimer) clearInterval(this.clipboardTimer)
     this.clipboardTimer = null
@@ -132,28 +133,74 @@ export class FlaredApp {
     }, 1500)
   }
 
+  /** Looks a link up with yt-dlp and queues it if it is a single piece of media. */
+  private async lookupAndQueue(
+    url: string,
+    options: DownloadOptions
+  ): Promise<Result<QuickResult>> {
+    const res = await this.engine.probe(url, this.context())
+    if (!res.ok) return res
+    const info = res.value
+    if (info.isPlaylist) {
+      return {
+        ok: true,
+        value: { status: 'playlist', title: info.title, count: info.entries.length }
+      }
+    }
+    const duplicate = this.queue.active().some((j) => j.url === url || j.url === info.url)
+    if (!duplicate) {
+      this.queue.add([{ url: info.url, title: info.title, thumbnail: info.thumbnail }], options)
+    }
+    return { ok: true, value: { status: 'queued', title: info.title, duplicate } }
+  }
+
   private async onClipboardUrl(url: string): Promise<void> {
     this.send('clipboard:url', url)
+    const open = (): void => void this.hooks.showMainWindow()
     if (!this.settings.clipboardAutoDownload) {
-      this.toast('Link copied', new URL(url).hostname, () => this.showWindow())
+      this.toast('Link copied', new URL(url).hostname, open)
       return
     }
     // Auto-download: look the link up first, so only media Flared understands is queued.
-    const res = await this.engine.probe(url, this.context())
+    const res = await this.lookupAndQueue(url, this.settings.defaults)
     if (!res.ok) return
-    const info = res.value
-    if (info.isPlaylist) {
-      this.toast('Playlist copied', `${info.title}: open Flared to choose items`, () =>
-        this.showWindow()
-      )
+    if (res.value.status === 'playlist') {
+      this.toast('Playlist copied', `${res.value.title}: open Flared to choose items`, open)
+    } else if (!res.value.duplicate) {
+      this.toast('Download started', res.value.title, open)
+    }
+  }
+
+  /** Quick bar entry point: same flow as clipboard auto-download, but the user chose the mode. */
+  private async quickSubmit(
+    raw: string,
+    mode: DownloadOptions['mode']
+  ): Promise<Result<QuickResult>> {
+    let url: string
+    try {
+      url = assertUrl(raw)
+    } catch (e) {
+      return { ok: false, error: { kind: 'unsupported', message: (e as Error).message } }
+    }
+    return this.lookupAndQueue(
+      url,
+      sanitizeOptions({ ...this.settings.defaults, mode }, this.settings.defaults)
+    )
+  }
+
+  private openInApp(raw: string): void {
+    let url: string
+    try {
+      url = assertUrl(raw)
+    } catch {
       return
     }
-    if (this.queue.active().some((j) => j.url === url || j.url === info.url)) return
-    this.queue.add(
-      [{ url: info.url, title: info.title, thumbnail: info.thumbnail }],
-      this.settings.defaults
-    )
-    this.toast('Download started', info.title, () => this.showWindow())
+    const win = this.hooks.showMainWindow()
+    const send = (): void => win.webContents.send('clipboard:url', url)
+    // A freshly created window has not subscribed to events yet.
+    if (win.webContents.isLoading())
+      win.webContents.once('did-finish-load', () => setTimeout(send, 300))
+    else send()
   }
 
   private handlers(): Handlers {
@@ -219,6 +266,9 @@ export class FlaredApp {
       },
       'shell:openFolder': () => void shell.openPath(this.settings.outputDir),
       'clipboard:read': () => clipboard.readText(),
+      'quick:submit': (url, mode) => this.quickSubmit(url, mode),
+      'quick:openInApp': (url) => this.openInApp(url),
+      'quick:hide': () => this.hooks.hideQuick(),
       'logs:get': () => this.logs.text(),
       'logs:clear': () => this.logs.clear()
     }

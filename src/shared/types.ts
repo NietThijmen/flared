@@ -80,5 +80,9 @@ export interface BinaryStatus {
   busy: boolean
 }
 
+export type QuickResult =
+  | { status: 'queued'; title: string; duplicate: boolean }
+  | { status: 'playlist'; title: string; count: number }
+
 export type Result<T> =
   { ok: true; value: T } | { ok: false; error: { kind: ErrorKind; message: string } }

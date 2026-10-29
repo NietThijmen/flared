@@ -102,3 +102,13 @@ button:focus-visible {
 .error {
   color: var(--danger);
 }
+
+/* Menu bar popover: let the window's vibrancy show through. */
+html.quick,
+html.quick body {
+  background: transparent;
+  overflow: hidden;
+}
+html.quick input[type='url'] {
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+}

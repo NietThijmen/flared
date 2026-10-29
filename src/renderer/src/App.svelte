@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte'
+  import QuickAdd from './components/QuickAdd.svelte'
   import History from './components/History.svelte'
   import Home from './components/Home.svelte'
   import Settings from './components/Settings.svelte'
@@ -12,25 +13,33 @@
     { id: 'settings', label: 'Settings' }
   ]
   let tab = $state<Tab>('home')
+  // The menu bar popover loads this same bundle with #quick.
+  const quick = location.hash === '#quick'
 
-  onMount(() => void app.init())
+  onMount(() => {
+    if (!quick) void app.init()
+  })
 </script>
 
-<main>
-  <header>
-    <h1>Flared</h1>
-    <nav>
-      {#each TABS as t (t.id)}
-        <button class="ghost" class:active={tab === t.id} onclick={() => (tab = t.id)}>
-          {t.label}{#if t.id === 'home' && app.jobs.length}<span class="count"
-              >{app.jobs.length}</span
-            >{/if}
-        </button>
-      {/each}
-    </nav>
-  </header>
-  {#if tab === 'home'}<Home />{:else if tab === 'history'}<History />{:else}<Settings />{/if}
-</main>
+{#if quick}
+  <QuickAdd />
+{:else}
+  <main>
+    <header>
+      <h1>Flared</h1>
+      <nav>
+        {#each TABS as t (t.id)}
+          <button class="ghost" class:active={tab === t.id} onclick={() => (tab = t.id)}>
+            {t.label}{#if t.id === 'home' && app.jobs.length}<span class="count"
+                >{app.jobs.length}</span
+              >{/if}
+          </button>
+        {/each}
+      </nav>
+    </header>
+    {#if tab === 'home'}<Home />{:else if tab === 'history'}<History />{:else}<Settings />{/if}
+  </main>
+{/if}
 
 <style>
   main {

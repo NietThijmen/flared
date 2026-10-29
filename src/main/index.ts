@@ -1,53 +1,37 @@
-import { app, session, shell, BrowserWindow } from 'electron'
-import { join } from 'path'
-import { electronApp, optimizer, is } from '@electron-toolkit/utils'
+import { app, session, BrowserWindow } from 'electron'
+import { electronApp, optimizer } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { FlaredApp } from './app'
+import { QuickBar } from './quickbar'
+import { loadRenderer, lockNavigation, webPreferences } from './renderer'
 
 let mainWindow: BrowserWindow | null = null
+let quickBar: QuickBar | null = null
 
-function createWindow(): void {
+function createWindow(): BrowserWindow {
   const win = new BrowserWindow({
     width: 900,
     height: 670,
     show: false,
     autoHideMenuBar: true,
     ...(process.platform === 'linux' ? { icon } : {}),
-    webPreferences: {
-      preload: join(__dirname, '../preload/index.js'),
-      sandbox: true
-    }
+    webPreferences
   })
 
   mainWindow = win
-
-  win.on('ready-to-show', () => {
-    win.show()
-  })
-
+  win.on('ready-to-show', () => win.show())
   win.on('closed', () => (mainWindow = null))
+  lockNavigation(win)
+  loadRenderer(win)
+  return win
+}
 
-  const openHttp = (url: string): void => {
-    if (/^https?:\/\//i.test(url)) void shell.openExternal(url)
-  }
-  win.webContents.setWindowOpenHandler((details) => {
-    openHttp(details.url)
-    return { action: 'deny' }
-  })
-  win.webContents.on('will-navigate', (event, url) => {
-    if (url !== win.webContents.getURL()) {
-      event.preventDefault()
-      openHttp(url)
-    }
-  })
-
-  // HMR for renderer base on electron-vite cli.
-  // Load the remote URL for development or the local html file for production.
-  if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
-    win.loadURL(process.env['ELECTRON_RENDERER_URL'])
-  } else {
-    win.loadFile(join(__dirname, '../renderer/index.html'))
-  }
+function showMainWindow(): BrowserWindow {
+  const win = mainWindow ?? createWindow()
+  if (win.isMinimized()) win.restore()
+  win.show()
+  win.focus()
+  return win
 }
 
 // This method will be called when Electron has finished
@@ -66,15 +50,20 @@ app.whenReady().then(() => {
 
   // Flared never needs camera, mic, geolocation, etc.
   session.defaultSession.setPermissionRequestHandler((_wc, _perm, cb) => cb(false))
-  const flared = new FlaredApp(() => mainWindow)
+  const flared = new FlaredApp(() => mainWindow, {
+    showMainWindow,
+    hideQuick: () => quickBar?.hide()
+  })
   flared.registerIpc()
   createWindow()
+  // Menu bar item for pasting a link and downloading without opening the main window.
+  if (process.platform === 'darwin') quickBar = new QuickBar(showMainWindow)
   void flared.bootstrapBinaries()
 
   app.on('activate', function () {
     // On macOS it's common to re-create a window in the app when the
     // dock icon is clicked and there are no other windows open.
-    if (BrowserWindow.getAllWindows().length === 0) createWindow()
+    if (!mainWindow) createWindow()
   })
 })
 

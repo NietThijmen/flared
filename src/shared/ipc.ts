@@ -1,4 +1,13 @@
-import type { BinaryStatus, DownloadOptions, Job, MediaInfo, Result, Settings } from './types'
+import type {
+  BinaryStatus,
+  DownloadMode,
+  DownloadOptions,
+  Job,
+  MediaInfo,
+  QuickResult,
+  Result,
+  Settings
+} from './types'
 
 /** Request/response channels (ipcRenderer.invoke -> ipcMain.handle). */
 export interface InvokeMap {
@@ -22,6 +31,9 @@ export interface InvokeMap {
   'shell:openExternal': (url: string) => void
   'shell:openFolder': () => void
   'clipboard:read': () => string
+  'quick:submit': (url: string, mode: DownloadMode) => Result<QuickResult>
+  'quick:openInApp': (url: string) => void
+  'quick:hide': () => void
   'logs:get': () => string
   'logs:clear': () => void
 }
@@ -55,6 +67,9 @@ export const INVOKE_CHANNELS: InvokeChannel[] = [
   'shell:openExternal',
   'shell:openFolder',
   'clipboard:read',
+  'quick:submit',
+  'quick:openInApp',
+  'quick:hide',
   'logs:get',
   'logs:clear'
 ]

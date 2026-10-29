@@ -1,34 +1,46 @@
-# flared
+# Flared
 
-An Electron application with Svelte and TypeScript
+A local-first media downloader. Paste a link (YouTube, SoundCloud and 1000+ other sites), pick video, audio or muted video, and download. Everything runs on your machine: no accounts, no telemetry, no Flared servers.
 
-## Recommended IDE Setup
+Flared is a desktop UI (Electron + Svelte 5) around [yt-dlp](https://github.com/yt-dlp/yt-dlp) and ffmpeg.
 
-- [VSCode](https://code.visualstudio.com/) + [ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint) + [Prettier](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode) + [Svelte](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode)
+## Privacy
 
-## Project Setup
+Flared only talks to:
 
-### Install
+- the sites you download from, and
+- GitHub (yt-dlp releases) and the ffmpeg build hosts, to install or update those tools. Turn auto-update off in Settings to skip the update check.
 
-```bash
-$ npm install
+yt-dlp is verified against its published SHA-256 sums; the Linux/Windows ffmpeg builds are verified against the FFmpeg-Builds checksums. The macOS ffmpeg build (martin-riedl.de) publishes no checksum beside the download, so it is **not** verified.
+
+## Development
+
+```sh
+npm install
+npm run dev        # run the app (installs yt-dlp/ffmpeg into the app data dir on first launch)
+npm test           # unit tests
+npm run lint && npm run typecheck
+FLARED_INTEGRATION=1 npm test   # also downloads real binaries and a short video
+npm run build:mac  # or build:win / build:linux
 ```
 
-### Development
-
-```bash
-$ npm run dev
+```
+src/main       Electron main: queue, yt-dlp engine, binary manager, settings, IPC
+src/preload    typed contextBridge API (channels listed in src/shared/ipc.ts)
+src/renderer   Svelte UI
+src/shared     types and the IPC contract shared by all three
 ```
 
-### Build
+Notes:
 
-```bash
-# For windows
-$ npm run build:win
+- yt-dlp is always spawned with an argument array (never a shell), URLs are restricted to http(s) and passed after `--`.
+- State is stored as JSON in the app data directory (`settings.json`, `jobs.json`) rather than SQLite, to avoid native module rebuilds.
+- "Cancel" stops a download; "Resume" re-queues it and yt-dlp continues from the partial file.
 
-# For macOS
-$ npm run build:mac
+## Releases
 
-# For Linux
-$ npm run build:linux
-```
+Pushing a `v*` tag builds mac/windows/linux artifacts in CI. Builds are unsigned and mac notarization is off (`notarize: false`); set up signing secrets before distributing widely.
+
+## Legal
+
+Only download content you have the right to. Flared does not circumvent DRM. You are responsible for complying with the terms of the services you use.

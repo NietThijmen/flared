@@ -20,8 +20,8 @@ function setup(concurrency = 1, initial: Job[] = []) {
     cancel: () => void
   }[] = []
   const deps: QueueDeps = {
-    engine: {
-      download: (_u, _o, _c, progress) => {
+    downloaders: {
+      download: (_u, _o, progress) => {
         const cancel = vi.fn()
         let resolve!: (r: Result<string | null>) => void
         const done = new Promise<Result<string | null>>((r) => (resolve = r))
@@ -29,12 +29,6 @@ function setup(concurrency = 1, initial: Job[] = []) {
         return { cancel, done }
       }
     },
-    context: () => ({
-      outputDir: '/o',
-      filenameTemplate: 't',
-      ffmpegDir: null,
-      cookiesFromBrowser: null
-    }),
     concurrency: () => concurrency,
     load: () => initial,
     save: vi.fn(),

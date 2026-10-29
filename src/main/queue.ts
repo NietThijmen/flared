@@ -1,18 +1,12 @@
 import { randomUUID } from 'node:crypto'
 import type { DownloadOptions, Job } from '../shared/types'
-import type { ArgContext, Progress } from './engine/args'
+import type { Progress } from './engine/args'
 import type { DownloadHandle } from './engine/ytdlp'
 
 export interface QueueDeps {
-  engine: {
-    download(
-      url: string,
-      o: DownloadOptions,
-      ctx: ArgContext,
-      cb: (p: Progress) => void
-    ): DownloadHandle
+  downloaders: {
+    download(url: string, o: DownloadOptions, cb: (p: Progress) => void): DownloadHandle
   }
-  context(): ArgContext
   concurrency(): number
   load(): Job[]
   save(jobs: Job[]): void
@@ -124,7 +118,7 @@ export class DownloadQueue {
     job.status = 'running'
     this.streams.set(job.id, { idx: 0, last: 0 })
     this.update(job)
-    const handle = this.deps.engine.download(job.url, job.options, this.deps.context(), (p) => {
+    const handle = this.deps.downloaders.download(job.url, job.options, (p) => {
       if (job.status !== 'running' || p.percent === null) return
       const s = this.streams.get(job.id)!
       if (p.percent + 1 < s.last) s.idx++

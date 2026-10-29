@@ -52,7 +52,12 @@ export function probeArgs(url: string, ctx: ArgContext): string[] {
 export const PROGRESS_PREFIX = '[fl]'
 export const PATH_PREFIX = '[fp]'
 
-export function downloadArgs(url: string, o: DownloadOptions, ctx: ArgContext): string[] {
+export function downloadArgs(
+  url: string,
+  o: DownloadOptions,
+  ctx: ArgContext,
+  extra: string[] = []
+): string[] {
   const args = [...common(ctx), '--newline', '--no-playlist', '--no-simulate']
   args.push(
     '--progress-template',
@@ -81,7 +86,7 @@ export function downloadArgs(url: string, o: DownloadOptions, ctx: ArgContext): 
   if (o.subtitles && o.mode === 'video') args.push('--write-subs', '--embed-subs')
   if (o.sponsorblock && o.mode !== 'audio') args.push('--sponsorblock-remove', 'sponsor')
 
-  args.push('--', assertUrl(url))
+  args.push(...extra, '--', assertUrl(url))
   return args
 }
 

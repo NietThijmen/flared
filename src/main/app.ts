@@ -5,6 +5,7 @@ import type { DownloadOptions, Job, QuickResult, Result, Settings } from '../sha
 import { BinaryManager } from './binaries'
 import { assertUrl, type ArgContext } from './engine/args'
 import { Engine } from './engine/ytdlp'
+import { createDownloaders, type DownloaderRegistry } from './downloaders'
 import { DownloadQueue } from './queue'
 import { applyPatch, defaultSettings, sanitizeOptions } from './settings'
 import { LogBuffer } from './logs'
@@ -29,7 +30,7 @@ export class FlaredApp {
   readonly settingsStore: JsonStore<Settings>
   settings: Settings
   readonly queue: DownloadQueue
-  private readonly engine: Engine
+  private readonly downloaders: DownloaderRegistry
   readonly logs = new LogBuffer()
   private lastClipboard = ''
   private clipboardTimer: NodeJS.Timeout | null = null
@@ -46,14 +47,14 @@ export class FlaredApp {
     this.binaries = new BinaryManager(join(data, 'bin'), undefined, (s) =>
       this.send('binaries:status', s)
     )
-    this.engine = new Engine(
+    const engine = new Engine(
       () => this.binaries.ytdlpPath,
       (chunk) => this.logs.push('yt-dlp', chunk)
     )
+    this.downloaders = createDownloaders(engine, () => this.context())
     const jobsStore = new JsonStore<Job[]>(join(data, 'jobs.json'), () => [])
     this.queue = new DownloadQueue({
-      engine: this.engine,
-      context: () => this.context(),
+      downloaders: this.downloaders,
       concurrency: () => this.settings.concurrency,
       load: () => jobsStore.load(),
       save: (jobs) => void jobsStore.save(jobs),
@@ -138,7 +139,7 @@ export class FlaredApp {
     url: string,
     options: DownloadOptions
   ): Promise<Result<QuickResult>> {
-    const res = await this.engine.probe(url, this.context())
+    const res = await this.downloaders.probe(url)
     if (!res.ok) return res
     const info = res.value
     if (info.isPlaylist) {
@@ -205,7 +206,7 @@ export class FlaredApp {
 
   private handlers(): Handlers {
     return {
-      'media:probe': (url) => this.engine.probe(url, this.context()),
+      'media:probe': (url) => this.downloaders.probe(url),
       'queue:add': (items, options) => {
         const clean = items.flatMap((i) => {
           try {

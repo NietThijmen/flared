@@ -54,11 +54,12 @@ export class Engine {
     url: string,
     options: DownloadOptions,
     ctx: ArgContext,
-    onProgress: (p: Progress) => void
+    onProgress: (p: Progress) => void,
+    extraArgs: string[] = []
   ): DownloadHandle {
     let args: string[]
     try {
-      args = downloadArgs(url, options, ctx)
+      args = downloadArgs(url, options, ctx, extraArgs)
     } catch (e) {
       return {
         cancel: () => undefined,

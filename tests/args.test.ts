@@ -37,6 +37,10 @@ describe('assertUrl', () => {
 })
 
 describe('downloadArgs', () => {
+  it('puts extra args before the URL separator', () => {
+    const a = downloadArgs('https://a.b/v', base, ctx, ['--parse-metadata', 'x:y'])
+    expect(a.slice(-4)).toEqual(['--parse-metadata', 'x:y', '--', 'https://a.b/v'])
+  })
   it('limits height and merges to container', () => {
     const a = downloadArgs('https://a.b/v', base, ctx)
     expect(a).toContain('bv*[height<=1080]+ba/b[height<=1080]')

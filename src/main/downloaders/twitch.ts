@@ -1,3 +1,4 @@
+import { plainVideo } from './rules'
 import type { YtDlpSite } from './ytdlp'
 
 const HOSTS = new Set(['twitch.tv', 'www.twitch.tv', 'm.twitch.tv'])
@@ -23,5 +24,5 @@ export const twitch: YtDlpSite = {
   name: 'Twitch',
   isValid: isTwitchUrl,
   // Twitch has no subtitle tracks and no SponsorBlock data.
-  adapt: (o) => ({ ...o, subtitles: false, sponsorblock: false })
+  adapt: plainVideo
 }

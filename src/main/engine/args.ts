@@ -159,7 +159,7 @@ export function parseProbe(json: any, requestedUrl: string): MediaInfo {
 const ERROR_RULES: [RegExp, ErrorKind][] = [
   [/not available in your country|geo.?restrict|geo.?block/i, 'geo-blocked'],
   [
-    /sign in|log ?in|login required|private video|members.only|age.restricted|confirm your age/i,
+    /sign in|log ?in|logged.?in|login required|private video|members.only|age.restricted|confirm your age/i,
     'login-required'
   ],
   [/HTTP Error 429|too many requests|rate.?limit/i, 'rate-limited'],

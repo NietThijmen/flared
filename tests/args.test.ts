@@ -115,6 +115,7 @@ describe('classifyError', () => {
   it.each([
     ['ERROR: Video unavailable', 'unavailable'],
     ['ERROR: Sign in to confirm your age', 'login-required'],
+    ['ERROR: [vimeo] 1: The web client only works when logged-in. Use --cookies', 'login-required'],
     ['ERROR: HTTP Error 429: Too Many Requests', 'rate-limited'],
     ['ERROR: Unsupported URL: https://x', 'unsupported'],
     ['ERROR: not available in your country', 'geo-blocked'],

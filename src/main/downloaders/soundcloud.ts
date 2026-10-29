@@ -1,3 +1,4 @@
+import { audioOnly } from './rules'
 import type { YtDlpSite } from './ytdlp'
 
 const HOSTS = new Set(['soundcloud.com', 'www.soundcloud.com', 'm.soundcloud.com'])
@@ -17,7 +18,7 @@ export const soundcloud: YtDlpSite = {
   name: 'SoundCloud',
   isValid: isSoundCloudUrl,
   // SoundCloud only serves audio, so a video/mute request is downloaded as audio.
-  adapt: (o) => ({ ...o, mode: 'audio', subtitles: false, sponsorblock: false }),
+  adapt: audioOnly,
   // The uploader is often a label or fan account, while the real artist is in the title as
   // "Artist - Song". Tag from that when present (meta_* only touches tags, not the filename).
   extraArgs: ['--parse-metadata', 'title:(?P<meta_artist>.+?) - (?P<meta_title>.+)']

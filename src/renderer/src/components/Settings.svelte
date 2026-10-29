@@ -34,207 +34,252 @@
 
 {#if app.settings}
   {@const s = app.settings}
-  <section class="settings">
-    <h2>Downloads</h2>
-    <div class="card grid">
-      <span>Save to</span>
-      <div class="inline">
-        <code>{s.outputDir}</code>
-        <button onclick={pickDir}>Change…</button>
+  <section>
+    <h3 class="set-title">Downloads</h3>
+    <div class="set-card">
+      <div class="set-row">
+        <span>Save to</span>
+        <div class="flex min-w-0 items-center gap-2">
+          <code class="truncate font-mono text-xs">{s.outputDir}</code>
+          <button class="btn flex-none" onclick={pickDir}>Change…</button>
+        </div>
       </div>
-
-      <label for="tpl">Filename</label>
-      <div>
+      <div class="set-row">
+        <label for="tpl">Filename</label>
+        <div>
+          <input
+            id="tpl"
+            type="text"
+            class="field w-full"
+            bind:value={template}
+            onchange={() => app.saveSettings({ filenameTemplate: template })}
+          />
+          <p class="mt-1 text-xs text-muted">
+            yt-dlp output template. Must be relative (no <code class="font-mono">..</code>); reverts
+            if invalid.
+          </p>
+        </div>
+      </div>
+      <div class="set-row">
+        <label for="conc">Simultaneous downloads</label>
         <input
-          id="tpl"
-          type="text"
-          bind:value={template}
-          onchange={() => app.saveSettings({ filenameTemplate: template })}
+          id="conc"
+          type="number"
+          min="1"
+          max="6"
+          class="field w-24"
+          value={s.concurrency}
+          onchange={(e) => app.saveSettings({ concurrency: e.currentTarget.valueAsNumber })}
         />
-        <p class="muted hint">
-          yt-dlp output template. Must be relative (no <code>..</code>); reverts if invalid.
-        </p>
-      </div>
-
-      <label for="conc">Simultaneous downloads</label>
-      <input
-        id="conc"
-        type="number"
-        min="1"
-        max="6"
-        value={s.concurrency}
-        onchange={(e) => app.saveSettings({ concurrency: e.currentTarget.valueAsNumber })}
-      />
-    </div>
-
-    <h2>Defaults</h2>
-    <div class="card grid">
-      <label for="mode">Type</label>
-      <select
-        id="mode"
-        value={s.defaults.mode}
-        onchange={(e) =>
-          app.saveSettings({
-            defaults: { ...s.defaults, mode: e.currentTarget.value as DownloadMode }
-          })}
-      >
-        <option value="video">Video</option>
-        <option value="audio">Audio</option>
-        <option value="mute">Muted video</option>
-      </select>
-
-      <label for="vc">Video format</label>
-      <select
-        id="vc"
-        value={s.defaults.videoContainer}
-        onchange={(e) =>
-          app.saveSettings({
-            defaults: { ...s.defaults, videoContainer: e.currentTarget.value as VideoContainer }
-          })}
-      >
-        {#each ['mp4', 'webm', 'mkv'] as f (f)}<option value={f}>{f}</option>{/each}
-      </select>
-
-      <label for="af">Audio format</label>
-      <select
-        id="af"
-        value={s.defaults.audioFormat}
-        onchange={(e) =>
-          app.saveSettings({
-            defaults: { ...s.defaults, audioFormat: e.currentTarget.value as AudioFormat }
-          })}
-      >
-        {#each ['mp3', 'opus', 'm4a', 'flac', 'wav'] as f (f)}<option value={f}>{f}</option>{/each}
-      </select>
-
-      <label for="h">Max quality</label>
-      <select
-        id="h"
-        value={s.defaults.maxHeight ?? ''}
-        onchange={(e) =>
-          app.saveSettings({
-            defaults: {
-              ...s.defaults,
-              maxHeight: e.currentTarget.value ? Number(e.currentTarget.value) : null
-            }
-          })}
-      >
-        <option value="">Best</option>
-        {#each [2160, 1440, 1080, 720, 480, 360] as h (h)}<option value={h}>{h}p</option>{/each}
-      </select>
-
-      <span>Options</span>
-      <div class="checks">
-        <label>
-          <input
-            type="checkbox"
-            checked={s.defaults.embedMetadata}
-            onchange={(e) =>
-              app.saveSettings({
-                defaults: { ...s.defaults, embedMetadata: e.currentTarget.checked }
-              })}
-          />
-          Embed tags &amp; cover
-        </label>
-        <label>
-          <input
-            type="checkbox"
-            checked={s.defaults.subtitles}
-            onchange={(e) =>
-              app.saveSettings({ defaults: { ...s.defaults, subtitles: e.currentTarget.checked } })}
-          />
-          Embed subtitles
-        </label>
-        <label>
-          <input
-            type="checkbox"
-            checked={s.defaults.sponsorblock}
-            onchange={(e) =>
-              app.saveSettings({
-                defaults: { ...s.defaults, sponsorblock: e.currentTarget.checked }
-              })}
-          />
-          Remove sponsor segments
-        </label>
       </div>
     </div>
 
-    <h2>App</h2>
-    <div class="card grid">
-      <span>Behaviour</span>
-      <div class="checks">
-        <label>
-          <input
-            type="checkbox"
-            checked={s.watchClipboard}
-            onchange={(e) => app.saveSettings({ watchClipboard: e.currentTarget.checked })}
-          />
-          Notify when a link is copied
-        </label>
-        <label>
-          <input
-            type="checkbox"
-            checked={s.clipboardAutoDownload}
-            disabled={!s.watchClipboard}
-            onchange={(e) => app.saveSettings({ clipboardAutoDownload: e.currentTarget.checked })}
-          />
-          Download copied links automatically (uses your defaults)
-        </label>
-        <label>
-          <input
-            type="checkbox"
-            checked={s.notifications}
-            onchange={(e) => app.saveSettings({ notifications: e.currentTarget.checked })}
-          />
-          Notify when downloads finish
-        </label>
-      </div>
-
-      <label for="cookies">Browser cookies</label>
-      <div>
+    <h3 class="set-title">Defaults</h3>
+    <div class="set-card">
+      <div class="set-row">
+        <label for="mode">Type</label>
         <select
-          id="cookies"
-          value={s.cookiesFromBrowser ?? ''}
-          onchange={(e) => app.saveSettings({ cookiesFromBrowser: e.currentTarget.value || null })}
+          id="mode"
+          class="field w-fit"
+          value={s.defaults.mode}
+          onchange={(e) =>
+            app.saveSettings({
+              defaults: { ...s.defaults, mode: e.currentTarget.value as DownloadMode }
+            })}
         >
-          <option value="">Don't use</option>
-          {#each BROWSERS as b (b)}<option value={b}>{b}</option>{/each}
+          <option value="video">Video</option>
+          <option value="audio">Audio</option>
+          <option value="mute">Muted video</option>
         </select>
-        <p class="muted hint">
-          For age-restricted or private media. Read locally by yt-dlp, never sent anywhere else.
-        </p>
+      </div>
+      <div class="set-row">
+        <label for="vc">Video format</label>
+        <select
+          id="vc"
+          class="field w-fit"
+          value={s.defaults.videoContainer}
+          onchange={(e) =>
+            app.saveSettings({
+              defaults: { ...s.defaults, videoContainer: e.currentTarget.value as VideoContainer }
+            })}
+        >
+          {#each ['mp4', 'webm', 'mkv'] as f (f)}<option value={f}>{f}</option>{/each}
+        </select>
+      </div>
+      <div class="set-row">
+        <label for="af">Audio format</label>
+        <select
+          id="af"
+          class="field w-fit"
+          value={s.defaults.audioFormat}
+          onchange={(e) =>
+            app.saveSettings({
+              defaults: { ...s.defaults, audioFormat: e.currentTarget.value as AudioFormat }
+            })}
+        >
+          {#each ['mp3', 'opus', 'm4a', 'flac', 'wav'] as f (f)}<option value={f}>{f}</option
+            >{/each}
+        </select>
+      </div>
+      <div class="set-row">
+        <label for="h">Max quality</label>
+        <select
+          id="h"
+          class="field w-fit"
+          value={s.defaults.maxHeight ?? ''}
+          onchange={(e) =>
+            app.saveSettings({
+              defaults: {
+                ...s.defaults,
+                maxHeight: e.currentTarget.value ? Number(e.currentTarget.value) : null
+              }
+            })}
+        >
+          <option value="">Best</option>
+          {#each [2160, 1440, 1080, 720, 480, 360] as h (h)}<option value={h}>{h}p</option>{/each}
+        </select>
+      </div>
+      <div class="set-row">
+        <span>Options</span>
+        <div class="flex flex-col gap-1.5">
+          <label class="flex items-center gap-2">
+            <input
+              type="checkbox"
+              class="accent-accent"
+              checked={s.defaults.embedMetadata}
+              onchange={(e) =>
+                app.saveSettings({
+                  defaults: { ...s.defaults, embedMetadata: e.currentTarget.checked }
+                })}
+            />
+            Embed tags &amp; cover
+          </label>
+          <label class="flex items-center gap-2">
+            <input
+              type="checkbox"
+              class="accent-accent"
+              checked={s.defaults.subtitles}
+              onchange={(e) =>
+                app.saveSettings({
+                  defaults: { ...s.defaults, subtitles: e.currentTarget.checked }
+                })}
+            />
+            Embed subtitles
+          </label>
+          <label class="flex items-center gap-2">
+            <input
+              type="checkbox"
+              class="accent-accent"
+              checked={s.defaults.sponsorblock}
+              onchange={(e) =>
+                app.saveSettings({
+                  defaults: { ...s.defaults, sponsorblock: e.currentTarget.checked }
+                })}
+            />
+            Remove sponsor segments
+          </label>
+        </div>
       </div>
     </div>
 
-    <h2>Tools</h2>
-    <div class="card grid">
-      <span>yt-dlp</span>
-      <span>{app.binaries?.ytdlp.version ?? 'not installed'}</span>
-      <span>ffmpeg</span>
-      <span>{app.binaries?.ffmpeg.version ?? 'not installed'}</span>
-      <span>Auto-update</span>
-      <label class="checks">
-        <input
-          type="checkbox"
-          checked={s.autoUpdateBinaries}
-          onchange={(e) => app.saveSettings({ autoUpdateBinaries: e.currentTarget.checked })}
-        />
-        Check GitHub for a newer yt-dlp on launch
-      </label>
-      <span></span>
-      <div>
-        <button onclick={update} disabled={updating || app.binaries?.busy}>
+    <h3 class="set-title">App</h3>
+    <div class="set-card">
+      <div class="set-row">
+        <span>Behaviour</span>
+        <div class="flex flex-col gap-1.5">
+          <label class="flex items-center gap-2">
+            <input
+              type="checkbox"
+              class="accent-accent"
+              checked={s.watchClipboard}
+              onchange={(e) => app.saveSettings({ watchClipboard: e.currentTarget.checked })}
+            />
+            Notify when a link is copied
+          </label>
+          <label class="flex items-center gap-2">
+            <input
+              type="checkbox"
+              class="accent-accent"
+              checked={s.clipboardAutoDownload}
+              disabled={!s.watchClipboard}
+              onchange={(e) => app.saveSettings({ clipboardAutoDownload: e.currentTarget.checked })}
+            />
+            Download copied links automatically (uses your defaults)
+          </label>
+          <label class="flex items-center gap-2">
+            <input
+              type="checkbox"
+              class="accent-accent"
+              checked={s.notifications}
+              onchange={(e) => app.saveSettings({ notifications: e.currentTarget.checked })}
+            />
+            Notify when downloads finish
+          </label>
+        </div>
+      </div>
+      <div class="set-row">
+        <label for="cookies">Browser cookies</label>
+        <div>
+          <select
+            id="cookies"
+            class="field w-fit"
+            value={s.cookiesFromBrowser ?? ''}
+            onchange={(e) =>
+              app.saveSettings({ cookiesFromBrowser: e.currentTarget.value || null })}
+          >
+            <option value="">Don't use</option>
+            {#each BROWSERS as b (b)}<option value={b}>{b}</option>{/each}
+          </select>
+          <p class="mt-1 text-xs text-muted">
+            For age-restricted or private media. Read locally by yt-dlp, never sent anywhere else.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <h3 class="set-title">Tools</h3>
+    <div class="set-card">
+      <div class="set-row">
+        <span>yt-dlp</span>
+        <span class="text-muted">{app.binaries?.ytdlp.version ?? 'not installed'}</span>
+      </div>
+      <div class="set-row">
+        <span>ffmpeg</span>
+        <span class="text-muted">{app.binaries?.ffmpeg.version ?? 'not installed'}</span>
+      </div>
+      <div class="set-row">
+        <span>Auto-update</span>
+        <label class="flex items-center gap-2">
+          <input
+            type="checkbox"
+            class="accent-accent"
+            checked={s.autoUpdateBinaries}
+            onchange={(e) => app.saveSettings({ autoUpdateBinaries: e.currentTarget.checked })}
+          />
+          Check GitHub for a newer yt-dlp on launch
+        </label>
+      </div>
+      <div class="set-row">
+        <span></span>
+        <button class="btn w-fit" onclick={update} disabled={updating || app.binaries?.busy}>
           {updating || app.binaries?.busy ? 'Working…' : 'Check for updates'}
         </button>
       </div>
     </div>
-    <h2>Diagnostics</h2>
-    <details class="card" ontoggle={(e) => e.currentTarget.open && loadLogs()}>
-      <summary>yt-dlp log</summary>
-      <pre>{logText || 'Nothing logged yet.'}</pre>
-      <div class="btns">
-        <button onclick={loadLogs}>Refresh</button>
+
+    <h3 class="set-title">Diagnostics</h3>
+    <details
+      class="rounded-2xl border border-line px-4 py-3"
+      ontoggle={(e) => e.currentTarget.open && loadLogs()}
+    >
+      <summary class="cursor-pointer">yt-dlp log</summary>
+      <pre
+        class="my-3 max-h-56 overflow-auto rounded-lg bg-surface-2 p-3 font-mono text-[11px] whitespace-pre-wrap select-text">{logText ||
+          'Nothing logged yet.'}</pre>
+      <div class="flex gap-2">
+        <button class="btn" onclick={loadLogs}>Refresh</button>
         <button
+          class="btn"
           onclick={async () => {
             await api['logs:clear']()
             logText = ''
@@ -242,68 +287,9 @@
         >
       </div>
     </details>
-    <p class="muted hint">
+    <p class="mt-4 text-xs text-muted">
       Flared contacts nothing except the sites you download from, plus GitHub when installing or
       updating the tools above.
     </p>
   </section>
 {/if}
-
-<style>
-  .settings {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-  h2 {
-    margin: 10px 0 0;
-    font-size: 13px;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-  .grid {
-    display: grid;
-    grid-template-columns: 200px 1fr;
-    gap: 12px 16px;
-    align-items: center;
-  }
-  .grid input[type='text'] {
-    width: 100%;
-  }
-  .inline {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    min-width: 0;
-  }
-  .inline code {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .checks {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
-  .hint {
-    margin: 4px 0 0;
-    font-size: 12px;
-  }
-  pre {
-    max-height: 220px;
-    overflow: auto;
-    font-size: 11px;
-    white-space: pre-wrap;
-    user-select: text;
-  }
-  .btns {
-    display: flex;
-    gap: 6px;
-  }
-  code {
-    font-family: ui-monospace, Menlo, monospace;
-    font-size: 12px;
-  }
-</style>

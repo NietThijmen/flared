@@ -44,6 +44,7 @@ export interface EventMap {
   'queue:removed': string
   'binaries:status': BinaryStatus
   'clipboard:url': string
+  'app:openSettings': null
 }
 
 export type InvokeChannel = keyof InvokeMap
@@ -78,7 +79,8 @@ export const EVENT_CHANNELS: EventChannel[] = [
   'queue:update',
   'queue:removed',
   'binaries:status',
-  'clipboard:url'
+  'clipboard:url',
+  'app:openSettings'
 ]
 
 export type FlaredApi = {

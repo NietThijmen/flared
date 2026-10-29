@@ -5,43 +5,16 @@
   const api = window.api
 </script>
 
-<section>
-  <div class="bar">
-    <h2>History</h2>
-    {#if app.history.length}
-      <div class="btns">
-        <button onclick={() => api['shell:openFolder']()}>Open folder</button>
-        <button onclick={() => api['history:clear']()}>Clear all</button>
-      </div>
-    {/if}
-  </div>
+<section class="flex flex-col gap-3">
   {#if app.history.length === 0}
-    <p class="muted">Finished downloads will show up here.</p>
+    <p class="py-10 text-center text-muted">Finished downloads will show up here.</p>
   {:else}
-    <div class="list">
+    <div class="flex gap-2">
+      <button class="btn" onclick={() => api['shell:openFolder']()}>Open folder</button>
+      <button class="btn" onclick={() => api['history:clear']()}>Clear all</button>
+    </div>
+    <div class="flex flex-col gap-2">
       {#each app.history as job (job.id)}<JobRow {job} />{/each}
     </div>
   {/if}
 </section>
-
-<style>
-  .bar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 12px;
-  }
-  .btns {
-    display: flex;
-    gap: 6px;
-  }
-  h2 {
-    margin: 0;
-    font-size: 16px;
-  }
-  .list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-</style>

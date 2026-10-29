@@ -3,78 +3,50 @@
   import QuickAdd from './components/QuickAdd.svelte'
   import History from './components/History.svelte'
   import Home from './components/Home.svelte'
+  import Modal from './components/Modal.svelte'
   import Settings from './components/Settings.svelte'
   import { app } from './lib/state.svelte'
 
-  type Tab = 'home' | 'history' | 'settings'
-  const TABS: { id: Tab; label: string }[] = [
-    { id: 'home', label: 'Download' },
-    { id: 'history', label: 'History' },
-    { id: 'settings', label: 'Settings' }
-  ]
-  let tab = $state<Tab>('home')
+  type Panel = 'history' | 'settings'
+  let panel = $state<Panel | null>(null)
   // The menu bar popover loads this same bundle with #quick.
   const quick = location.hash === '#quick'
+  const settingsKey = /Mac/i.test(navigator.userAgent) ? '⌘,' : 'Ctrl+,'
 
   onMount(() => {
-    if (!quick) void app.init()
+    if (quick) return
+    void app.init()
+    // Sent by the application menu's "Settings…" item (Cmd/Ctrl+,).
+    return window.api.on('app:openSettings', () => (panel = 'settings'))
   })
 </script>
 
 {#if quick}
   <QuickAdd />
 {:else}
-  <main>
-    <header>
-      <h1>Flared</h1>
-      <nav>
-        {#each TABS as t (t.id)}
-          <button class="ghost" class:active={tab === t.id} onclick={() => (tab = t.id)}>
-            {t.label}{#if t.id === 'home' && app.jobs.length}<span class="count"
-                >{app.jobs.length}</span
-              >{/if}
-          </button>
-        {/each}
-      </nav>
-    </header>
-    {#if tab === 'home'}<Home />{:else if tab === 'history'}<History />{:else}<Settings />{/if}
-  </main>
-{/if}
+  <main class="flex min-h-screen flex-col">
+    <div class="flex flex-1 flex-col items-center px-6 pt-[18vh] pb-10">
+      <Home />
+    </div>
 
-<style>
-  main {
-    max-width: 760px;
-    margin: 0 auto;
-    padding: 20px 16px 40px;
-  }
-  header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 16px;
-  }
-  h1 {
-    margin: 0;
-    font-size: 20px;
-    letter-spacing: -0.01em;
-  }
-  nav {
-    display: flex;
-    gap: 4px;
-  }
-  nav .active {
-    background: var(--surface-2);
-    border-color: var(--border);
-  }
-  nav button {
-    border-color: transparent;
-  }
-  .count {
-    margin-left: 6px;
-    background: var(--accent);
-    color: var(--accent-text);
-    border-radius: 10px;
-    padding: 0 6px;
-    font-size: 11px;
-  }
-</style>
+    <footer class="flex items-center gap-1 border-t border-line bg-surface-2/40 px-4 py-2.5">
+      <button class="btn btn-ghost" onclick={() => (panel = 'history')}>
+        History
+        {#if app.history.length}<span class="text-xs text-muted">{app.history.length}</span>{/if}
+      </button>
+      <button class="btn btn-ghost" onclick={() => (panel = 'settings')}>
+        Settings
+        <kbd class="rounded border border-line px-1.5 font-sans text-xs text-muted"
+          >{settingsKey}</kbd
+        >
+      </button>
+    </footer>
+  </main>
+
+  <Modal open={panel === 'history'} title="History" onclose={() => (panel = null)}>
+    <History />
+  </Modal>
+  <Modal open={panel === 'settings'} title="Settings" onclose={() => (panel = null)}>
+    <Settings />
+  </Modal>
+{/if}

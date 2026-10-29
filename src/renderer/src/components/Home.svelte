@@ -110,49 +110,94 @@
 
 <svelte:window ondragover={(e) => e.preventDefault()} ondrop={onDrop} />
 
-<section class="home">
-  {#if !binariesReady}
-    <div class="card notice">
-      {app.binaries?.busy
-        ? 'Setting up yt-dlp and ffmpeg…'
-        : 'Waiting for yt-dlp and ffmpeg to be installed.'}
-    </div>
-  {/if}
-
-  {#if app.clipboardUrl}
-    <button class="card clip" onclick={useClipboard}>Link in clipboard: {app.clipboardUrl}</button>
-  {/if}
+<section class="flex w-full max-w-2xl flex-col items-stretch gap-5">
+  <h1 class="text-center text-6xl font-semibold tracking-tight select-none">Flared</h1>
 
   <form
-    class="paste"
+    class="group relative"
     onsubmit={(e) => {
       e.preventDefault()
       void probe()
     }}
   >
+    <svg
+      viewBox="0 0 24 24"
+      class="pointer-events-none absolute top-1/2 left-5 size-5 -translate-y-1/2 text-muted"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+      ><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1" /><path
+        d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"
+      /></svg
+    >
     <input
       type="url"
-      placeholder="Paste a link: YouTube, SoundCloud, and 1000+ more"
+      placeholder="Paste a link"
       bind:value={url}
       onpaste={() => setTimeout(probe, 0)}
       aria-label="Media link"
+      class="h-14 w-full rounded-full border border-line bg-surface pr-14 pl-13 text-base shadow-sm transition-shadow outline-none placeholder:text-muted hover:shadow-md focus:border-transparent focus:shadow-lg focus:ring-2 focus:ring-accent/40"
     />
-    <button class="primary" disabled={busy || !url.trim() || !binariesReady}>
-      {busy ? 'Looking…' : 'Fetch'}
+    <button
+      class="btn btn-primary absolute top-1/2 right-2 size-10 -translate-y-1/2 !p-0"
+      disabled={busy || !url.trim() || !binariesReady}
+      aria-label={busy ? 'Looking…' : 'Fetch'}
+    >
+      {#if busy}
+        <span class="size-4 animate-spin rounded-full border-2 border-current border-t-transparent"
+        ></span>
+      {:else}
+        <svg
+          viewBox="0 0 24 24"
+          class="size-5"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.2"
+          stroke-linecap="round"
+          stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg
+        >
+      {/if}
     </button>
   </form>
 
-  {#if error}<p class="error">{error}</p>{/if}
+  {#if !binariesReady}
+    <p class="text-center text-muted">
+      {app.binaries?.busy
+        ? 'Setting up yt-dlp and ffmpeg…'
+        : 'Waiting for yt-dlp and ffmpeg to be installed.'}
+    </p>
+  {/if}
+
+  {#if app.clipboardUrl}
+    <button
+      class="btn mx-auto max-w-full self-center"
+      onclick={useClipboard}
+      title={app.clipboardUrl}
+    >
+      <span class="text-muted">Paste from clipboard</span>
+      <span class="max-w-72 truncate">{app.clipboardUrl}</span>
+    </button>
+  {/if}
+
+  {#if error}<p class="text-center text-danger">{error}</p>{/if}
 
   {#if info}
-    <div class="card preview">
-      <div class="head">
+    <div class="flex flex-col gap-4 rounded-3xl border border-line bg-surface p-5">
+      <div class="flex gap-4">
         {#if info.thumbnail}
-          <img src={info.thumbnail} alt="" referrerpolicy="no-referrer" />
+          <img
+            src={info.thumbnail}
+            alt=""
+            referrerpolicy="no-referrer"
+            class="aspect-video w-40 flex-none rounded-xl object-cover"
+          />
         {/if}
-        <div>
-          <h2>{info.title}</h2>
-          <p class="muted">
+        <div class="min-w-0">
+          <h2 class="line-clamp-2 text-base leading-snug font-medium">{info.title}</h2>
+          <p class="mt-1 truncate text-muted">
             {[info.uploader, formatDuration(info.duration), info.extractor]
               .filter(Boolean)
               .join(' · ')}
@@ -160,186 +205,98 @@
         </div>
       </div>
 
-      <div class="seg" role="radiogroup" aria-label="Download type">
+      <div
+        class="inline-flex w-fit gap-0.5 rounded-full bg-surface-2 p-1"
+        role="radiogroup"
+        aria-label="Download type"
+      >
         {#each ['video', 'audio', 'mute'] as const as m (m)}
           <button
-            class:active={mode === m}
             role="radio"
             aria-checked={mode === m}
             onclick={() => (mode = m)}
+            class="rounded-full px-4 py-1 text-sm font-medium transition-colors {mode === m
+              ? 'bg-accent text-accent-ink'
+              : 'text-muted hover:text-ink'}"
           >
             {m === 'mute' ? 'Muted video' : m[0].toUpperCase() + m.slice(1)}
           </button>
         {/each}
       </div>
 
-      <div class="opts">
+      <div class="flex flex-wrap items-end gap-4">
         {#if mode !== 'audio'}
-          <label>
+          <label class="flex flex-col gap-1 text-xs text-muted">
             Quality
-            <select bind:value={maxHeight}>
+            <select bind:value={maxHeight} class="field text-ink">
               <option value={null}>Best</option>
               {#each info.heights as h (h)}<option value={h}>{h}p</option>{/each}
             </select>
           </label>
-          <label>
+          <label class="flex flex-col gap-1 text-xs text-muted">
             Format
-            <select bind:value={container}>
+            <select bind:value={container} class="field text-ink">
               <option value="mp4">mp4</option>
               <option value="webm">webm</option>
               <option value="mkv">mkv</option>
             </select>
           </label>
         {:else}
-          <label>
+          <label class="flex flex-col gap-1 text-xs text-muted">
             Format
-            <select bind:value={audioFormat}>
+            <select bind:value={audioFormat} class="field text-ink">
               {#each ['mp3', 'opus', 'm4a', 'flac', 'wav'] as f (f)}<option value={f}>{f}</option
                 >{/each}
             </select>
           </label>
         {/if}
-        <label class="check"
-          ><input type="checkbox" bind:checked={embedMetadata} /> Tags &amp; cover</label
+        <label class="flex items-center gap-2 pb-2"
+          ><input type="checkbox" class="accent-accent" bind:checked={embedMetadata} /> Tags &amp; cover</label
         >
         {#if mode === 'video'}
-          <label class="check"><input type="checkbox" bind:checked={subtitles} /> Subtitles</label>
+          <label class="flex items-center gap-2 pb-2"
+            ><input type="checkbox" class="accent-accent" bind:checked={subtitles} /> Subtitles</label
+          >
         {/if}
         {#if mode !== 'audio'}
-          <label class="check"
-            ><input type="checkbox" bind:checked={sponsorblock} /> Skip sponsors</label
+          <label class="flex items-center gap-2 pb-2"
+            ><input type="checkbox" class="accent-accent" bind:checked={sponsorblock} /> Skip sponsors</label
           >
         {/if}
       </div>
 
       {#if info.isPlaylist}
-        <div class="entries">
-          <div class="muted">{selected.size} of {info.entries.length} selected</div>
+        <div class="max-h-60 overflow-auto rounded-xl border border-line px-3 py-2">
+          <div class="pb-1 text-muted">{selected.size} of {info.entries.length} selected</div>
           {#each info.entries as e (e.id)}
-            <label class="entry">
-              <input type="checkbox" checked={selected.has(e.id)} onchange={() => toggle(e.id)} />
-              <span class="t">{e.title}</span>
-              <span class="muted">{formatDuration(e.duration)}</span>
+            <label class="flex gap-2 py-1">
+              <input
+                type="checkbox"
+                class="accent-accent"
+                checked={selected.has(e.id)}
+                onchange={() => toggle(e.id)}
+              />
+              <span class="flex-1 truncate">{e.title}</span>
+              <span class="text-muted">{formatDuration(e.duration)}</span>
             </label>
           {/each}
         </div>
       {/if}
 
-      <button class="primary" onclick={download} disabled={info.isPlaylist && selected.size === 0}>
+      <button
+        class="btn btn-primary h-11 w-fit px-6"
+        onclick={download}
+        disabled={info.isPlaylist && selected.size === 0}
+      >
         {info.isPlaylist ? `Download ${selected.size} items` : 'Download'}
       </button>
     </div>
   {/if}
 
   {#if queued.length}
-    <h3>Downloading</h3>
-    <div class="list">
+    <div class="mt-2 flex flex-col gap-2">
+      <h3 class="px-1 text-xs font-medium tracking-wider text-muted uppercase">Downloading</h3>
       {#each queued as job (job.id)}<JobRow {job} />{/each}
     </div>
   {/if}
 </section>
-
-<style>
-  .home {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-  .paste {
-    display: flex;
-    gap: 8px;
-  }
-  .paste input {
-    flex: 1;
-    padding: 12px 14px;
-    font-size: 15px;
-  }
-  .notice {
-    color: var(--muted);
-  }
-  .clip {
-    text-align: left;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .head {
-    display: flex;
-    gap: 12px;
-    margin-bottom: 12px;
-  }
-  .head img {
-    width: 160px;
-    aspect-ratio: 16 / 9;
-    object-fit: cover;
-    border-radius: 8px;
-  }
-  h2 {
-    font-size: 16px;
-    margin: 0 0 4px;
-  }
-  h3 {
-    margin: 8px 0 0;
-    font-size: 13px;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-  p {
-    margin: 0;
-  }
-  .seg {
-    display: inline-flex;
-    gap: 4px;
-    margin-bottom: 12px;
-  }
-  .seg .active {
-    background: var(--accent);
-    color: var(--accent-text);
-    border-color: transparent;
-  }
-  .opts {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    align-items: end;
-    margin-bottom: 12px;
-  }
-  .opts label {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    font-size: 12px;
-    color: var(--muted);
-  }
-  .opts label.check {
-    flex-direction: row;
-    align-items: center;
-    color: var(--text);
-    font-size: 13px;
-  }
-  .entries {
-    max-height: 240px;
-    overflow: auto;
-    margin-bottom: 12px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 6px 10px;
-  }
-  .entry {
-    display: flex;
-    gap: 8px;
-    padding: 3px 0;
-  }
-  .entry .t {
-    flex: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-</style>

@@ -2,6 +2,7 @@ import { app, session, BrowserWindow } from 'electron'
 import { electronApp, optimizer } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { FlaredApp } from './app'
+import { installMenu } from './menu'
 import { QuickBar } from './quickbar'
 import { loadRenderer, lockNavigation, webPreferences } from './renderer'
 
@@ -55,6 +56,7 @@ app.whenReady().then(() => {
     hideQuick: () => quickBar?.hide()
   })
   flared.registerIpc()
+  installMenu(showMainWindow)
   createWindow()
   // Menu bar item for pasting a link and downloading without opening the main window.
   if (process.platform === 'darwin') quickBar = new QuickBar(showMainWindow)

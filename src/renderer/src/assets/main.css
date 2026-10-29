@@ -1,114 +1,80 @@
-:root {
-  color-scheme: light dark;
-  --bg: #f6f6f8;
-  --surface: #ffffff;
-  --surface-2: #eeeef2;
-  --border: #dcdce3;
-  --text: #17171c;
-  --muted: #6b6b78;
-  --accent: #5b5bf0;
-  --accent-text: #ffffff;
-  --danger: #d8344a;
-  --ok: #1f9d55;
-  --radius: 12px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, system-ui, sans-serif;
+@import 'tailwindcss';
+
+/* Semantic tokens: light values here, dark overrides below. Utilities read them as `bg-canvas` etc. */
+@theme {
+  --color-canvas: #ffffff;
+  --color-surface: #ffffff;
+  --color-surface-2: #f1f3f4;
+  --color-line: #dadce0;
+  --color-ink: #202124;
+  --color-muted: #5f6368;
+  --color-accent: #1a73e8;
+  --color-accent-ink: #ffffff;
+  --color-danger: #d93025;
+  --color-ok: #188038;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, system-ui, sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #101014;
-    --surface: #18181e;
-    --surface-2: #23232b;
-    --border: #2e2e38;
-    --text: #ececf1;
-    --muted: #8d8d9b;
-    --accent: #7b7bff;
-    --accent-text: #0b0b12;
-    --danger: #ff6378;
-    --ok: #3ccf7a;
+    --color-canvas: #202124;
+    --color-surface: #303134;
+    --color-surface-2: #3c4043;
+    --color-line: #5f6368;
+    --color-ink: #e8eaed;
+    --color-muted: #9aa0a6;
+    --color-accent: #8ab4f8;
+    --color-accent-ink: #202124;
+    --color-danger: #f28b82;
+    --color-ok: #81c995;
   }
 }
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
+@layer base {
+  :root {
+    color-scheme: light dark;
+  }
+  body {
+    @apply bg-canvas text-ink font-sans text-sm antialiased;
+  }
+  button {
+    @apply cursor-pointer disabled:cursor-default disabled:opacity-50;
+  }
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-accent;
+  }
 }
 
-body {
-  margin: 0;
-  background: var(--bg);
-  color: var(--text);
-  font-size: 14px;
-  line-height: 1.45;
-}
-
-button,
-input,
-select {
-  font: inherit;
-  color: inherit;
-}
-
-button {
-  cursor: pointer;
-  border: 1px solid var(--border);
-  background: var(--surface-2);
-  border-radius: 8px;
-  padding: 7px 12px;
-}
-button:hover:not(:disabled) {
-  border-color: var(--accent);
-}
-button:disabled {
-  opacity: 0.5;
-  cursor: default;
-}
-button.primary {
-  background: var(--accent);
-  color: var(--accent-text);
-  border-color: transparent;
-  font-weight: 600;
-}
-button.ghost {
-  background: transparent;
-}
-
-input[type='text'],
-input[type='url'],
-select {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 8px 10px;
-  min-width: 0;
-}
-input:focus-visible,
-select:focus-visible,
-button:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
-}
-
-.card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 14px;
-}
-.muted {
-  color: var(--muted);
-}
-.error {
-  color: var(--danger);
+/* Shared building blocks, so markup stays readable. */
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-full border border-line bg-surface px-4 py-1.5 text-sm font-medium text-ink transition-colors hover:not-disabled:bg-surface-2;
+  }
+  .btn-primary {
+    @apply border-transparent bg-accent text-accent-ink hover:not-disabled:bg-accent/90;
+  }
+  .btn-ghost {
+    @apply border-transparent bg-transparent text-muted hover:not-disabled:bg-surface-2 hover:not-disabled:text-ink;
+  }
+  .set-title {
+    @apply mt-6 mb-2 px-1 text-xs font-medium tracking-wider text-muted uppercase first:mt-0;
+  }
+  .set-card {
+    @apply divide-y divide-line overflow-hidden rounded-2xl border border-line;
+  }
+  .set-row {
+    @apply grid grid-cols-1 items-center gap-x-4 gap-y-1 px-4 py-3 sm:grid-cols-[11rem_1fr];
+  }
+  .field {
+    @apply min-w-0 rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink;
+  }
 }
 
 /* Menu bar popover: let the window's vibrancy show through. */
 html.quick,
 html.quick body {
-  background: transparent;
-  overflow: hidden;
+  @apply overflow-hidden bg-transparent;
 }
 html.quick input[type='url'] {
-  background: color-mix(in srgb, var(--surface) 70%, transparent);
+  background: color-mix(in srgb, var(--color-surface) 70%, transparent);
 }

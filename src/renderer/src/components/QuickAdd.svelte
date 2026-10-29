@@ -75,7 +75,7 @@
 <svelte:window onfocus={onFocus} onkeydown={onKeydown} />
 
 <form
-  class="quick"
+  class="flex h-screen flex-col gap-2.5 p-4"
   onsubmit={(e) => {
     e.preventDefault()
     void submit()
@@ -88,79 +88,44 @@
     aria-label="Media link"
     bind:value={url}
     oninput={() => status.kind === 'error' && (status = { kind: 'idle' })}
+    class="field h-11 w-full rounded-full px-4 text-sm"
   />
 
-  <div class="row">
-    <div class="seg" role="radiogroup" aria-label="Download type">
+  <div class="flex items-center justify-between gap-2">
+    <div
+      class="inline-flex gap-0.5 rounded-full bg-surface-2 p-1"
+      role="radiogroup"
+      aria-label="Download type"
+    >
       {#each MODES as m (m.id)}
         <button
           type="button"
-          class:active={mode === m.id}
           role="radio"
           aria-checked={mode === m.id}
-          onclick={() => (mode = m.id)}>{m.label}</button
+          onclick={() => (mode = m.id)}
+          class="rounded-full px-3 py-0.5 text-xs font-medium transition-colors {mode === m.id
+            ? 'bg-accent text-accent-ink'
+            : 'text-muted hover:text-ink'}">{m.label}</button
         >
       {/each}
     </div>
-    <button class="primary" disabled={busy || !url.trim()}>{busy ? 'Looking…' : 'Download'}</button>
+    <button class="btn btn-primary" disabled={busy || !url.trim()}
+      >{busy ? 'Looking…' : 'Download'}</button
+    >
   </div>
 
-  <div class="status" aria-live="polite">
+  <div class="flex min-h-[18px] items-center gap-2 overflow-hidden text-xs" aria-live="polite">
     {#if status.kind === 'queued'}
-      <span class="ok"
+      <span class="truncate text-ok"
         >{status.duplicate ? 'Already downloading' : 'Downloading'}: {status.title}</span
       >
     {:else if status.kind === 'playlist'}
-      <span>Playlist, {status.count} items.</span>
-      <button type="button" class="ghost" onclick={openInApp}>Choose in Flared</button>
+      <span class="truncate">Playlist, {status.count} items.</span>
+      <button type="button" class="btn btn-ghost !px-2 !py-0.5 text-xs" onclick={openInApp}
+        >Choose in Flared</button
+      >
     {:else if status.kind === 'error'}
-      <span class="error">{status.message}</span>
+      <span class="truncate text-danger">{status.message}</span>
     {/if}
   </div>
 </form>
-
-<style>
-  .quick {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    padding: 16px;
-    height: 100vh;
-  }
-  input {
-    width: 100%;
-    padding: 10px 12px;
-    font-size: 14px;
-  }
-  .row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 8px;
-  }
-  .seg {
-    display: inline-flex;
-    gap: 4px;
-  }
-  .seg .active {
-    background: var(--accent);
-    color: var(--accent-text);
-    border-color: transparent;
-  }
-  .status {
-    font-size: 12px;
-    min-height: 18px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    overflow: hidden;
-  }
-  .status span {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .ok {
-    color: var(--ok);
-  }
-</style>

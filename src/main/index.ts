@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow } from 'electron'
+import { app, session, shell, BrowserWindow } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
@@ -64,6 +64,8 @@ app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window)
   })
 
+  // Flared never needs camera, mic, geolocation, etc.
+  session.defaultSession.setPermissionRequestHandler((_wc, _perm, cb) => cb(false))
   const flared = new FlaredApp(() => mainWindow)
   flared.registerIpc()
   createWindow()

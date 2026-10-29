@@ -7,6 +7,11 @@
 
   let template = $state('')
   let updating = $state(false)
+  let logText = $state('')
+
+  async function loadLogs(): Promise<void> {
+    logText = await api['logs:get']()
+  }
 
   $effect(() => {
     if (app.settings) template = app.settings.filenameTemplate
@@ -214,6 +219,20 @@
         </button>
       </div>
     </div>
+    <h2>Diagnostics</h2>
+    <details class="card" ontoggle={(e) => e.currentTarget.open && loadLogs()}>
+      <summary>yt-dlp log</summary>
+      <pre>{logText || 'Nothing logged yet.'}</pre>
+      <div class="btns">
+        <button onclick={loadLogs}>Refresh</button>
+        <button
+          onclick={async () => {
+            await api['logs:clear']()
+            logText = ''
+          }}>Clear</button
+        >
+      </div>
+    </details>
     <p class="muted hint">
       Flared contacts nothing except the sites you download from, plus GitHub when installing or
       updating the tools above.
@@ -262,6 +281,17 @@
   .hint {
     margin: 4px 0 0;
     font-size: 12px;
+  }
+  pre {
+    max-height: 220px;
+    overflow: auto;
+    font-size: 11px;
+    white-space: pre-wrap;
+    user-select: text;
+  }
+  .btns {
+    display: flex;
+    gap: 6px;
   }
   code {
     font-family: ui-monospace, Menlo, monospace;

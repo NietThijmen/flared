@@ -5,13 +5,19 @@
 
   const api = window.api
   const active = $derived(job.status === 'queued' || job.status === 'running')
+  const HINTS: Record<string, string> = {
+    'login-required': 'Needs a login: try enabling browser cookies in Settings.',
+    'geo-blocked': 'Not available in your region.',
+    'rate-limited': 'The site is rate-limiting you. Wait a while and retry.',
+    'binary-missing': 'yt-dlp is not installed yet.'
+  }
   const label = $derived(
     job.status === 'running'
       ? [`${job.progress}%`, job.speed, job.eta ? `ETA ${job.eta}` : null]
           .filter(Boolean)
           .join(' · ')
       : job.status === 'error'
-        ? (job.error?.message ?? 'Failed')
+        ? ((job.error && HINTS[job.error.kind]) ?? job.error?.message ?? 'Failed')
         : job.status
   )
 </script>

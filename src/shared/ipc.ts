@@ -22,6 +22,8 @@ export interface InvokeMap {
   'shell:openExternal': (url: string) => void
   'shell:openFolder': () => void
   'clipboard:read': () => string
+  'logs:get': () => string
+  'logs:clear': () => void
 }
 
 /** Main -> renderer push events. */
@@ -52,7 +54,9 @@ export const INVOKE_CHANNELS: InvokeChannel[] = [
   'shell:reveal',
   'shell:openExternal',
   'shell:openFolder',
-  'clipboard:read'
+  'clipboard:read',
+  'logs:get',
+  'logs:clear'
 ]
 
 export const EVENT_CHANNELS: EventChannel[] = [

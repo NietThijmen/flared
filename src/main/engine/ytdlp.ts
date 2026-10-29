@@ -17,7 +17,10 @@ export interface DownloadHandle {
 }
 
 export class Engine {
-  constructor(private readonly ytdlpPath: () => string) {}
+  constructor(
+    private readonly ytdlpPath: () => string,
+    private readonly onLog: (chunk: string) => void = () => undefined
+  ) {}
 
   probe(url: string, ctx: ArgContext): Promise<Result<MediaInfo>> {
     return new Promise((resolve) => {
@@ -31,7 +34,10 @@ export class Engine {
       let out = ''
       let err = ''
       p.stdout?.on('data', (d) => (out += d))
-      p.stderr?.on('data', (d) => (err += d))
+      p.stderr?.on('data', (d) => {
+        err += d
+        this.onLog(String(d))
+      })
       p.on('error', (e) => resolve(spawnFailure(e)))
       p.on('close', (code) => {
         if (code !== 0) return resolve({ ok: false, error: classifyError(err) })
@@ -75,7 +81,10 @@ export class Engine {
         if (path) filePath = path
       }
     })
-    p.stderr?.on('data', (d) => (err += d))
+    p.stderr?.on('data', (d) => {
+      err += d
+      this.onLog(String(d))
+    })
     const done = new Promise<Result<string | null>>((resolve) => {
       p.on('error', (e) => resolve(spawnFailure(e)))
       p.on('close', (code) => {

@@ -7,6 +7,7 @@ import { assertUrl, type ArgContext } from './engine/args'
 import { Engine } from './engine/ytdlp'
 import { DownloadQueue } from './queue'
 import { applyPatch, defaultSettings, sanitizeOptions } from './settings'
+import { LogBuffer } from './logs'
 import { JsonStore } from './store'
 
 import { ipcMain } from 'electron'
@@ -23,6 +24,7 @@ export class FlaredApp {
   settings: Settings
   readonly queue: DownloadQueue
   private readonly engine: Engine
+  readonly logs = new LogBuffer()
   private lastClipboard = ''
   private clipboardTimer: NodeJS.Timeout | null = null
 
@@ -35,7 +37,10 @@ export class FlaredApp {
     this.binaries = new BinaryManager(join(data, 'bin'), undefined, (s) =>
       this.send('binaries:status', s)
     )
-    this.engine = new Engine(() => this.binaries.ytdlpPath)
+    this.engine = new Engine(
+      () => this.binaries.ytdlpPath,
+      (chunk) => this.logs.push('yt-dlp', chunk)
+    )
     const jobsStore = new JsonStore<Job[]>(join(data, 'jobs.json'), () => [])
     this.queue = new DownloadQueue({
       engine: this.engine,
@@ -72,7 +77,7 @@ export class FlaredApp {
       await this.binaries.ensure()
       if (this.settings.autoUpdateBinaries) await this.binaries.update()
     } catch (e) {
-      console.error('Binary setup failed:', e)
+      this.logs.push('setup', `Binary setup failed: ${(e as Error).message}`)
     }
   }
 
@@ -170,7 +175,9 @@ export class FlaredApp {
         }
       },
       'shell:openFolder': () => void shell.openPath(this.settings.outputDir),
-      'clipboard:read': () => clipboard.readText()
+      'clipboard:read': () => clipboard.readText(),
+      'logs:get': () => this.logs.text(),
+      'logs:clear': () => this.logs.clear()
     }
   }
 

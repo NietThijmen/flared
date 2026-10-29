@@ -67,6 +67,8 @@ export interface Settings {
   concurrency: number
   autoUpdateBinaries: boolean
   watchClipboard: boolean
+  /** With watchClipboard: queue copied single-media links with the default options. */
+  clipboardAutoDownload: boolean
   notifications: boolean
   cookiesFromBrowser: string | null
   defaults: DownloadOptions

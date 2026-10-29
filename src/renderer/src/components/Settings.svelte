@@ -169,7 +169,16 @@
             checked={s.watchClipboard}
             onchange={(e) => app.saveSettings({ watchClipboard: e.currentTarget.checked })}
           />
-          Offer links copied to the clipboard
+          Notify when a link is copied
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            checked={s.clipboardAutoDownload}
+            disabled={!s.watchClipboard}
+            onchange={(e) => app.saveSettings({ clipboardAutoDownload: e.currentTarget.checked })}
+          />
+          Download copied links automatically (uses your defaults)
         </label>
         <label>
           <input

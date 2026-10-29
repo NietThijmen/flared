@@ -35,6 +35,7 @@ Notes:
 
 - yt-dlp is always spawned with an argument array (never a shell), URLs are restricted to http(s) and passed after `--`.
 - State is stored as JSON in the app data directory (`settings.json`, `jobs.json`) rather than SQLite, to avoid native module rebuilds.
+- Clipboard watching (opt-in) notifies when a link is copied; with auto-download on, Flared looks the link up with yt-dlp and queues single-media links using your defaults (playlists only notify). Links already on the clipboard when watching starts are ignored.
 - "Cancel" stops a download; "Resume" re-queues it and yt-dlp continues from the partial file.
 
 ## Releases

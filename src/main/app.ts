@@ -97,20 +97,63 @@ export class FlaredApp {
     }).show()
   }
 
+  private toast(title: string, body: string, onClick?: () => void): void {
+    if (!this.settings.notifications || !Notification.isSupported()) return
+    const n = new Notification({ title, body })
+    if (onClick) n.on('click', onClick)
+    n.show()
+  }
+
+  private showWindow(): void {
+    const win = this.getWindow()
+    if (!win) return
+    if (win.isMinimized()) win.restore()
+    win.show()
+    win.focus()
+  }
+
   private applyClipboardWatch(): void {
     if (this.clipboardTimer) clearInterval(this.clipboardTimer)
     this.clipboardTimer = null
     if (!this.settings.watchClipboard) return
+    // Whatever is on the clipboard right now was not "newly copied".
+    void Promise.resolve(clipboard.readText()).then((t) => (this.lastClipboard = t.trim()))
     this.clipboardTimer = setInterval(async () => {
       const text = (await clipboard.readText()).trim()
       if (!text || text === this.lastClipboard) return
       this.lastClipboard = text
+      let url: string
       try {
-        this.send('clipboard:url', assertUrl(text))
+        url = assertUrl(text)
       } catch {
-        /* not a URL */
+        return // not a URL
       }
+      await this.onClipboardUrl(url)
     }, 1500)
+  }
+
+  private async onClipboardUrl(url: string): Promise<void> {
+    this.send('clipboard:url', url)
+    if (!this.settings.clipboardAutoDownload) {
+      this.toast('Link copied', new URL(url).hostname, () => this.showWindow())
+      return
+    }
+    // Auto-download: look the link up first, so only media Flared understands is queued.
+    const res = await this.engine.probe(url, this.context())
+    if (!res.ok) return
+    const info = res.value
+    if (info.isPlaylist) {
+      this.toast('Playlist copied', `${info.title}: open Flared to choose items`, () =>
+        this.showWindow()
+      )
+      return
+    }
+    if (this.queue.active().some((j) => j.url === url || j.url === info.url)) return
+    this.queue.add(
+      [{ url: info.url, title: info.title, thumbnail: info.thumbnail }],
+      this.settings.defaults
+    )
+    this.toast('Download started', info.title, () => this.showWindow())
   }
 
   private handlers(): Handlers {

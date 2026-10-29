@@ -11,6 +11,14 @@ describe('settings', () => {
   it('accepts nested relative templates', () =>
     expect(isSafeTemplate('%(uploader)s/%(title)s.%(ext)s')).toBe(true))
 
+  it('only accepts boolean clipboard flags', () => {
+    const base = defaultSettings('/dl')
+    expect(applyPatch(base, { clipboardAutoDownload: true }).clipboardAutoDownload).toBe(true)
+    expect(applyPatch(base, { clipboardAutoDownload: 'yes' as never }).clipboardAutoDownload).toBe(
+      false
+    )
+  })
+
   it('clamps and validates patches', () => {
     const base = defaultSettings('/dl')
     const next = applyPatch(base, {

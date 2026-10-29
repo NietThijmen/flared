@@ -17,6 +17,7 @@ export function defaultSettings(downloadsDir: string): Settings {
     concurrency: 2,
     autoUpdateBinaries: true,
     watchClipboard: false,
+    clipboardAutoDownload: false,
     notifications: true,
     cookiesFromBrowser: null,
     defaults: DEFAULT_OPTIONS
@@ -61,7 +62,12 @@ export function applyPatch(current: Settings, patch: Partial<Settings>): Setting
     next.filenameTemplate = patch.filenameTemplate
   if (typeof patch.concurrency === 'number')
     next.concurrency = Math.min(6, Math.max(1, Math.floor(patch.concurrency)))
-  for (const k of ['autoUpdateBinaries', 'watchClipboard', 'notifications'] as const)
+  for (const k of [
+    'autoUpdateBinaries',
+    'watchClipboard',
+    'clipboardAutoDownload',
+    'notifications'
+  ] as const)
     if (typeof patch[k] === 'boolean') next[k] = patch[k]
   if (patch.cookiesFromBrowser !== undefined)
     next.cookiesFromBrowser =

@@ -43,7 +43,10 @@ export class FlaredApp {
       concurrency: () => this.settings.concurrency,
       load: () => jobsStore.load(),
       save: (jobs) => void jobsStore.save(jobs),
-      emit: (job) => this.send('queue:update', job),
+      emit: (job) => {
+        this.send('queue:update', job)
+        this.updateProgressBar()
+      },
       emitRemoved: (id) => this.send('queue:removed', id),
       onFinished: (job) => this.notify(job)
     })
@@ -71,6 +74,13 @@ export class FlaredApp {
     } catch (e) {
       console.error('Binary setup failed:', e)
     }
+  }
+
+  /** Mirrors overall progress on the dock/taskbar icon. */
+  private updateProgressBar(): void {
+    const active = this.queue.active()
+    const total = active.reduce((sum, j) => sum + j.progress, 0)
+    this.getWindow()?.setProgressBar(active.length ? total / active.length / 100 : -1)
   }
 
   private notify(job: Job): void {
@@ -159,6 +169,7 @@ export class FlaredApp {
           /* ignore non-http(s) */
         }
       },
+      'shell:openFolder': () => void shell.openPath(this.settings.outputDir),
       'clipboard:read': () => clipboard.readText()
     }
   }

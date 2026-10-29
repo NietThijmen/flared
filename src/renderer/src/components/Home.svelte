@@ -86,6 +86,20 @@
     else selected.add(id)
   }
 
+  function onDrop(e: DragEvent): void {
+    e.preventDefault()
+    const text = (
+      e.dataTransfer?.getData('text/uri-list') ||
+      e.dataTransfer?.getData('text/plain') ||
+      ''
+    )
+      .split('\n')
+      .find((l) => /^https?:\/\//i.test(l.trim()))
+    if (!text) return
+    url = text.trim()
+    void probe()
+  }
+
   function useClipboard(): void {
     if (!app.clipboardUrl) return
     url = app.clipboardUrl
@@ -93,6 +107,8 @@
     void probe()
   }
 </script>
+
+<svelte:window ondragover={(e) => e.preventDefault()} ondrop={onDrop} />
 
 <section class="home">
   {#if !binariesReady}

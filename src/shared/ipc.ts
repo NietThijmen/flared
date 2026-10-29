@@ -20,6 +20,7 @@ export interface InvokeMap {
   'binaries:update': () => BinaryStatus
   'shell:reveal': (path: string) => void
   'shell:openExternal': (url: string) => void
+  'shell:openFolder': () => void
   'clipboard:read': () => string
 }
 
@@ -50,6 +51,7 @@ export const INVOKE_CHANNELS: InvokeChannel[] = [
   'binaries:update',
   'shell:reveal',
   'shell:openExternal',
+  'shell:openFolder',
   'clipboard:read'
 ]
 

@@ -9,7 +9,10 @@
   <div class="bar">
     <h2>History</h2>
     {#if app.history.length}
-      <button onclick={() => api['history:clear']()}>Clear all</button>
+      <div class="btns">
+        <button onclick={() => api['shell:openFolder']()}>Open folder</button>
+        <button onclick={() => api['history:clear']()}>Clear all</button>
+      </div>
     {/if}
   </div>
   {#if app.history.length === 0}
@@ -27,6 +30,10 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 12px;
+  }
+  .btns {
+    display: flex;
+    gap: 6px;
   }
   h2 {
     margin: 0;
